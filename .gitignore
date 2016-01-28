@@ -9,3 +9,5 @@ storage/
 storage.db
 test/
 *.sqlite
+script.sh
+toprocess*
