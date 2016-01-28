@@ -1,0 +1,11 @@
+*.py[co]
+mods/
+__pycache__/
+test*
+.*.swp
+dependency-check/
+*.jar
+storage/
+storage.db
+test/
+*.sqlite
