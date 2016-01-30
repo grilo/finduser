@@ -1,36 +1,33 @@
+#!/usr/bin/env python
+
 import logging
+import subprocess
+import shlex
+import json
+import multiprocessing
 
-import task
 
+class FindUser:
+    def __init__(self, command='./script.sh', workers=multiprocessing.cpu_count() ** 2):
+        self.command = command
+        self.workers = workers
 
-class TaskManager:
+    def find(self, uuid):
+        logging.debug("Querying for user %d" % (uuid))
+        cmd = " ".join([self.command, str(uuid)])
+        stdout = subprocess.check_output(shlex.split(cmd), stderr= subprocess.STDOUT)
+        data = json.loads(stdout.decode('utf8'))
+        return {
+            "cip": uuid,
+            "products": data,
+        }
 
-    def __init__(self):
-        self.__running = []
-        self.__done = []
+    def parallel_find(self, iterator):
+        proc_pool = multiprocessing.Pool(self.workers)
+        return proc_pool.imap_unordered(self.find, iterator)
 
-    def add_task(self, task):
-        self.__running.append(task)
-        task.start()
-        logging.debug("Started task with PID %s" % (task.pid))
-
-    def __refresh(self):
-        # Collect the output of processes which are done
-        for task in list(self.__running):
-            if not task.done(): continue
-            if task.returncode != 0:
-                logging.error("Error executing the task! PID (%s) cmd (%s) output (%s)" % \
-                    (task.pid, task.command, "\n".join(task.stdout, task.stderr)))
-            else:
-                self.__done.append(task.stdout)
-            self.__running.remove(task)
-
-    def get_finished(self):
-        self.__refresh()
-        reports = self.__done[:]
-        self.__done = [] # Clear our 'done' queue
-        return reports
-
-    def get_running(self):
-        self.__refresh()
-        return self.__running
+if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.DEBUG)
+    f = FindUser("python simulate.py")
+    #print(f.find(1))
+    [x for x in f.parallel_find(range(100))]

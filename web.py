@@ -7,6 +7,7 @@ import bottle
 import models
 
 app = bottle.Bottle()
+dao = models.DAO()
 
 @app.hook('after_request')
 def enable_cors():
@@ -20,10 +21,14 @@ def enable_cors():
 
 @app.route('/user', method=['GET'])
 def get_users():
-    parameters = {}
+    properties = {}
     for k, v in bottle.request.query.decode().items():
-        parameters[k] = v
-    return json.dumps(models.getquery(parameters))
+        properties[k] = v
+    return json.dumps(dao.get_user_by_properties(properties))
+
+@app.route('/user/<cip>', method=['POST'])
+def touch_user(cip):
+    dao.touch_user({"cip": cip})
 
 @app.route('/')
 def hello():

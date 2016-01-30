@@ -11,3 +11,5 @@ test/
 *.sqlite
 script.sh
 toprocess*
+sample*
+simulate.py
