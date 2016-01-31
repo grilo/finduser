@@ -4,10 +4,10 @@ import logging
 import json
 import bottle
 
-import models
+import data
 
 app = bottle.Bottle()
-dao = models.DAO()
+dao = data.Access()
 
 @app.hook('after_request')
 def enable_cors():

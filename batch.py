@@ -7,7 +7,7 @@ import sys
 import time
 
 import finduser
-import models
+import data
 
 
 if __name__ == '__main__':
@@ -28,12 +28,14 @@ if __name__ == '__main__':
         logging.getLogger().setLevel(logging.DEBUG)
 
     f = finduser.FindUser("python simulate.py", args.workers)
-    dao = models.DAO()
+    dao = data.Access()
+
     while True:
         # Get the list of dirty users which represent users with tainted
         # or outdated info, and freshen their data by querying GTM directly
-        for u in f.parallel_find(dao.get_dirty_users()):
-            dao.update_user(u)
+        for products in f.parallel_find(dao.get_dirty_users()):
+            dao.insert_data(products)
 
         logging.info("All users processed, taking a small nap...")
-        time.sleep(10)
+        break
+        time.sleep(5)
