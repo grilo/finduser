@@ -36,6 +36,5 @@ if __name__ == '__main__':
         for products in f.parallel_find(dao.get_dirty_users()):
             dao.update_products(products)
 
-        logging.info("All users processed, taking a small nap...")
-        break
+        logging.info("All users processed, taking a nap...")
         time.sleep(5)
