@@ -1,5 +1,5 @@
 import logging
-import peewee
+import extlibs.peewee as peewee
 import pprint
 
 import settings

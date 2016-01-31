@@ -2,9 +2,10 @@
 
 import logging
 import json
-import bottle
+import extlibs.bottle as bottle
 
 import data
+import settings
 
 app = bottle.Bottle()
 dao = data.Access()
@@ -21,7 +22,7 @@ def enable_cors():
 
 @app.route('/finduser', method=['POST'])
 def get_users():
-    request = bottle.request.body.read().decode('utf8')
+    request = bottle.request.body.read().decode(settings.default_encoding)
     cip = dao.get_user_by_properties(json.loads(request))
     if cip == "":
         bottle.abort(400, "Unable to find a user matching the criteriae.")

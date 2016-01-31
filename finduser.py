@@ -7,6 +7,8 @@ import json
 import multiprocessing
 import time
 
+import settings
+
 
 class FindUser:
     def __init__(self, command='./script.sh', workers=multiprocessing.cpu_count() ** 2):
@@ -31,7 +33,7 @@ class FindUser:
         stdout = subprocess.check_output(shlex.split(cmd), stderr= subprocess.STDOUT)
 
         products = []
-        for d in json.loads(stdout.decode('utf8')):
+        for d in json.loads(stdout.decode(settings.default_encoding)):
             d["user"] = uuid
             d["openDate"] = self._openDate_to_epoch(d["openDate"])
             products.append(d)

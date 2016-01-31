@@ -4,11 +4,11 @@ import logging
 import operator
 import functools
 import time
-
-import peewee
+import extlibs.peewee as peeewee
 
 import models
 import product
+import settings
 
 
 class Access:
@@ -40,7 +40,7 @@ class Access:
             return ''
 
     def get_dirty_users(self):
-        delta = time.time() - 300 
+        delta = time.time() - settings.dirty_user_refresh
         return [u.cip for u in models.User.select(models.User.cip).where(models.User.dirty == True).where(models.User.lastUpdate < delta).limit(10000)]
 
     def update_products(self, products):
@@ -56,7 +56,7 @@ class Access:
 
         logging.warning("Inserting products for: %s" % (str(products[0]["user"])))
         with models.db.atomic():
-            product.Product.insert_many(products).upsert(upsert=True).execute()
+            product.Product.insert_many(validated).upsert(upsert=True).execute()
 
         # Mark the user's data as fresh
         return models.User.update(dirty=False, lastUpdate=time.time()).where(models.User.cip == products[0]["user"]).execute()

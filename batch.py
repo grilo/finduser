@@ -8,6 +8,7 @@ import time
 
 import finduser
 import data
+import settings
 
 
 if __name__ == '__main__':
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    f = finduser.FindUser("python simulate.py", args.workers)
+    f = finduser.FindUser(settings.find_user_exec, args.workers)
     dao = data.Access()
 
     while True:
