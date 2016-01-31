@@ -29,7 +29,6 @@ class FindUser:
         logging.warn("Querying for user %d" % (uuid))
         cmd = " ".join([self.command, str(uuid)])
         stdout = subprocess.check_output(shlex.split(cmd), stderr= subprocess.STDOUT)
-        print(stdout.decode('utf8'))
 
         products = []
         for d in json.loads(stdout.decode('utf8')):
