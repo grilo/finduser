@@ -7,8 +7,6 @@ import json
 import multiprocessing
 import time
 
-import product
-
 
 class FindUser:
     def __init__(self, command='./script.sh', workers=multiprocessing.cpu_count() ** 2):
@@ -31,12 +29,10 @@ class FindUser:
         logging.warn("Querying for user %d" % (uuid))
         cmd = " ".join([self.command, str(uuid)])
         stdout = subprocess.check_output(shlex.split(cmd), stderr= subprocess.STDOUT)
+        print(stdout.decode('utf8'))
 
         products = []
         for d in json.loads(stdout.decode('utf8')):
-            if not product.validate(d):
-                logging.error("Ignoring invalid data (%s): %s" % (uuid, d))
-                continue
             d["user"] = uuid
             d["openDate"] = self._openDate_to_epoch(d["openDate"])
             products.append(d)
@@ -53,4 +49,6 @@ class FindUser:
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
     f = FindUser("python simulate.py")
+    #import pprint
+    #pprint.pprint(f.find(4))
     #[x for x in f.parallel_find(range(100))]

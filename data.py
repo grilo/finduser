@@ -45,10 +45,21 @@ class Access:
         return [u.cip for u in models.User.select(models.User.cip).where(models.User.dirty == True).limit(10000)]
 
     def update_products(self, products):
-        logging.warn("Inserting products for: %s" % (str(products[0]["user"])))
+        if len(products) <= 0: return
+
+        # Ensure that the data is actually good for insertion
+        validated = []
+        for p in products:
+            if not product.validate(p):
+                logging.error("Ignoring invalid data (%s): %s" % (p["user"], p))
+                continue
+            validated.append(p)
+
+        logging.warning("Inserting products for: %s" % (str(products[0]["user"])))
         with models.db.atomic():
             product.Product.insert_many(products).upsert(upsert=True).execute()
 
+        # Mark the user's data as fresh
         return models.User.update(dirty=False).where(models.User.cip == products[0]["user"]).execute()
 
 
