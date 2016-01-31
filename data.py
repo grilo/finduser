@@ -44,11 +44,10 @@ class Access:
     def get_dirty_users(self):
         return [u.cip for u in models.User.select(models.User.cip).where(models.User.dirty == True).limit(10000)]
 
-    def insert_data(self, products):
+    def update_products(self, products):
         logging.warn("Inserting products for: %s" % (str(products[0]["user"])))
         with models.db.atomic():
             product.Product.insert_many(products).upsert(upsert=True).execute()
-            #product.Product.insert_many(products).execute()
 
         return models.User.update(dirty=False).where(models.User.cip == products[0]["user"]).execute()
 

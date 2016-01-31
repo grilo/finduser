@@ -34,7 +34,7 @@ if __name__ == '__main__':
         # Get the list of dirty users which represent users with tainted
         # or outdated info, and freshen their data by querying GTM directly
         for products in f.parallel_find(dao.get_dirty_users()):
-            dao.insert_data(products)
+            dao.update_products(products)
 
         logging.info("All users processed, taking a small nap...")
         break
