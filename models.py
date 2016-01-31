@@ -16,3 +16,4 @@ class BaseModel(peewee.Model):
 class User(BaseModel):
     cip = peewee.BigIntegerField(primary_key=True)
     dirty = peewee.BooleanField(default=True)
+    lastUpdate = peewee.DateTimeField(null=True)
