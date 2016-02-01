@@ -4,7 +4,7 @@ import logging
 import operator
 import functools
 import time
-import extlibs.peewee as peeewee
+import extlibs.peewee as orm
 
 import models
 import product
@@ -16,6 +16,9 @@ class Access:
     def __init__(self):
         models.db.connect()
         models.db.create_tables([models.User, product.Product], True)
+
+    def get_product_fields(self):
+        return product.get_schema()
 
     def get_user_by_properties(self, parameters):
         clauses = []
@@ -35,8 +38,10 @@ class Access:
             user = q.join(models.User).where(models.User.dirty == False).get().user
             user.dirty = True
             user.save()
+            logging.info("Found user for query: %s" % (parameters))
             return user.cip
-        except peewee.DoesNotExist:
+        except orm.DoesNotExist:
+            logging.error("No user found for query: %s" % (parameters))
             return ''
 
     def get_dirty_users(self):

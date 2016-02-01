@@ -1,13 +1,25 @@
 <html>
 
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+        <!-- External Libs -->
+        <script type="text/javascript" src="/libs/jquery-2.1.4.min.js"></script>
+        <script type="text/javascript" src="/libs/bootstrap.min.js"></script>
+        <!-- Internal Libs -->
+        <script type="text/javascript" src="/api.js"></script>
+        <script type="text/javascript" src="/app.js"></script>
+        <!-- Styles -->
+        <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="screen"/>
+        <title>
+            FindUser - ING Bank España
+        </title>
+    </head>
+
     <body>
 
-        <h1>Que tipo de usuario buscas?</h1>
-
-        <form action="static/success.html">
-            <button type="submit">Dame un usuario</button>
-        </form>
-
+        <div id="content" style="max-width: 50%; margin: 0 auto;"></div>
+        <div id="status" hidden="true" style="max-width:50%; margin: 0 auto;"></div>
 
     <body>
 

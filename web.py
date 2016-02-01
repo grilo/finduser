@@ -23,6 +23,8 @@ def enable_cors():
 @app.route('/finduser', method=['POST'])
 def get_users():
     request = bottle.request.body.read().decode(settings.default_encoding)
+    if request == '{}':
+        bottle.abort(400, "No query parameters sent, refusing to return a value.")
     cip = dao.get_user_by_properties(json.loads(request))
     if cip == "":
         bottle.abort(400, "Unable to find a user matching the criteriae.")
@@ -34,7 +36,14 @@ def touch_user(cip):
 
 @app.route('/<filename:re:.*\.(css|js|jpg|png|gif|ico|ttf|eot|woff|woff2|svg|jsr|html)>')
 def static_files(filename):
-    return bottle.static_file(filename, root='')
+    return bottle.static_file(filename, root='static/')
+
+@app.route('/finduser/model')
+def user_model():
+    model = {}
+    for field_name, field_type in dao.get_product_fields().items():
+        model[field_name] = str(field_type.__name__)
+    return json.dumps(model)
 
 @app.route('/')
 def hello():
