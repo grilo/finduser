@@ -54,4 +54,4 @@ def hello():
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
-    bottle.run(app, host='localhost', port=8080, debug=True)
+    bottle.run(app, host=settings.web_address, port=settings.web_port, debug=True)
