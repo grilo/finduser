@@ -13,5 +13,6 @@ script.sh
 toprocess*
 sample*
 simulate.py
-product.py
 makeusers.*
+*.sh
+*sqlite-journal
