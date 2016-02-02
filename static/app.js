@@ -2,7 +2,7 @@ function addProduct (e) {
     e.preventDefault();
 
     getProductModel().success(function (response) {
-        var keys = Object.keys(response);
+        var keys = Object.keys(response["product"]);
         keys.sort();
 
         getTemplate("product", function (tpl) {
@@ -48,7 +48,7 @@ function addProductField (e) {
 }
 
 function submitProducts (e) {
-    requestObject = {"products": []};
+    requestObject = {"product": []};
     $('div.product').each(function (productPanel) {
         product = {};
         $(this).children('form').each(function (fieldForm) {
@@ -60,7 +60,7 @@ function submitProducts (e) {
             }
         });
         if (!$.isEmptyObject(product)) {
-            requestObject["products"].push(product);
+            requestObject["product"].push(product);
         }
     });
 
@@ -68,10 +68,12 @@ function submitProducts (e) {
 
     promise.success(function (response) {
         console.log("Everything OK");
+        console.log(response);
     });
 
     promise.error(function (response) {
         console.log("Oops, something ugly!");
+        console.log(response);
     });
 }
 

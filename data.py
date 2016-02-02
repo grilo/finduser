@@ -24,7 +24,7 @@ class Access:
         logging.debug("Get user by properties: %s" % (properties))
 
         # Set default parameters
-        for p in properties["products"]:
+        for p in properties["product"]:
             for k, v in settings.db_default_properties.items():
                 if k in p.keys(): continue
                 p[k] = v
@@ -34,7 +34,7 @@ class Access:
         # product2, product3, ..., and then intersect the results,
         # fetching the first user which matches all of the queries
         lists_of_users = []
-        for p in properties["products"]:
+        for p in properties["product"]:
             print(p)
             clauses = []
             for k, v in p.items():

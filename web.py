@@ -20,38 +20,51 @@ def enable_cors():
     bottle.response.headers['Access-Control-Allow-Methods'] = 'PUT, GET, POST, DELETE, OPTIONS'
     bottle.response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
 
-@app.route('/finduser', method=['POST'])
-def get_users():
-    request = bottle.request.body.read().decode(settings.default_encoding)
-    logging.info("Find user: %s" % (request))
-    if request == '{}':
-        bottle.abort(400, "No query parameters sent, refusing to return a value.")
-    cip = dao.get_user_by_properties(json.loads(request))
-    if cip == "":
-        bottle.abort(404, "Unable to find a user matching the criteriae.")
-    return json.dumps(cip)
-
-@app.route('/user/<cip>', method=['POST'])
-def touch_user(cip):
-    dao.touch_user({"cip": cip, "dirty": True, "lastUpdate": 0.0})
-
 @app.route('/<filename:re:.*\.(css|js|jpg|png|gif|ico|ttf|eot|woff|woff2|svg|jsr|html)>')
 def static_files(filename):
     return bottle.static_file(filename, root='static/')
 
-@app.route('/finduser/model')
-def user_model():
-    model = {}
-    for field_name, field_type in dao.get_product_fields().items():
-        model[field_name] = str(field_type.__name__)
-    return json.dumps(model)
-
 @app.route('/')
 def hello():
-    f = open('static/index.html')
-    contents = f.read()
-    f.close()
-    return contents
+    return bottle.static_file('index.html', root='static/')
+
+"""
+    Enforce the database the update the information for user <cip>
+"""
+@app.route('/user/<cip>', method=['POST'])
+def touch_user(cip):
+    dao.touch_user({"cip": cip, "dirty": True, "lastUpdate": 0.0})
+
+"""
+    Model to build the user interfaces
+"""
+@app.route('/finduser/model')
+def user_model():
+    model = {
+        "product": {}
+    }
+    for field_name, field_type in dao.get_product_fields().items():
+        model["product"][field_name] = str(field_type.__name__)
+    return json.dumps(model)
+
+@app.route('/finduser', method=['POST'])
+def get_users():
+    request = bottle.request.body.read().decode(settings.default_encoding)
+    logging.info("Find user: %s" % (request))
+    json_obj = json.loads(request)
+
+    param_count = 0
+    if k, v in json_obj.items():
+        param_count += len(v)
+    if param_count == 0:
+        return bottle.abort(400, "No query parameters sent, refusing to return a value.")
+
+    cip = dao.get_user_by_properties(json_obj)
+    if cip == "":
+        return bottle.abort(404, "Unable to find a user matching the criteriae.")
+
+    return json.dumps(cip)
+
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
