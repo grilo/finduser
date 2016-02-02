@@ -14,3 +14,9 @@ function findUser(json_obj) {
     });
 };
 
+function getTemplate(name, callback) {
+    return $.get('/templates/' + name + '.jsr', function(data) {
+        var tpl = $.templates(data);
+        callback(tpl);
+    });
+};

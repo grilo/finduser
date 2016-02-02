@@ -1,0 +1,17 @@
+<div class="panel panel-info">
+
+    <div class="panel-heading">
+
+        <h3 class="panel-title pull-left">Product</h3>
+
+        <button class="btn btn-info pull-right">
+            <span class="glyphicon glyphicon glyphicon-remove"></span>
+        </button>
+
+        <div class="clearfix"></div>
+
+    </div>
+
+    <div class="panel-body product"></div>
+
+</div>

@@ -1,0 +1,21 @@
+<form class="form-inline">
+    <select class="form-control input-sm fieldName">
+        {{for fields}}
+            <option>{{:#data}}</option>
+        {{/for}}
+    </select>
+
+    <select class="form-control input-sm fieldOperator">
+        <option>=</option>
+        <option>!=</option>
+        <option>>=</option>
+        <option><=</option>
+    </select>
+
+    <input type="text" class="form-control input-sm fieldValue" placeholder="Something">
+
+    <button class="btn btn-danger input-sm">
+        <span class="glyphicon glyphicon-minus-sign"></span>
+    </button>
+
+</form>
