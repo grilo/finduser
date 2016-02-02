@@ -23,11 +23,12 @@ def enable_cors():
 @app.route('/finduser', method=['POST'])
 def get_users():
     request = bottle.request.body.read().decode(settings.default_encoding)
+    logging.info("Find user: %s" % (request))
     if request == '{}':
         bottle.abort(400, "No query parameters sent, refusing to return a value.")
     cip = dao.get_user_by_properties(json.loads(request))
     if cip == "":
-        bottle.abort(400, "Unable to find a user matching the criteriae.")
+        bottle.abort(404, "Unable to find a user matching the criteriae.")
     return json.dumps(cip)
 
 @app.route('/user/<cip>', method=['POST'])
