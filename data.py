@@ -20,32 +20,64 @@ class Access:
     def get_product_fields(self):
         return product.get_schema()
 
-    def get_user_by_properties(self, parameters):
-        clauses = []
-        for k, v in parameters.items():
-            if v.startswith(">"):
-                clauses.append((getattr(product.Product, k) > v.lstrip(">=")))
-            elif v.startswith("<"):
-                clauses.append((getattr(product.Product, k) <= v.lstrip("<=")))
-            else:
-                clauses.append((getattr(product.Product, k) == v.lstrip("=")))
-        # Find the products which match the requirements and return the
-        # corresponding user that the product is linked to (Foreign Key)
-        # Make sure the user is marked as dirty since its data will probably
-        # not be true within a few minutes.
+    def get_user_by_properties(self, properties):
+
+        # Set default parameters
+        for p in properties["products"]:
+            for k, v in settings.db_default_properties.items():
+                if k in p.keys(): continue
+                p[k] = v
+
+        import pprint
+
+        pprint.pprint(properties)
+
+
+        # For this to work, we need to create an intersection between
+        # all products. Meaning, get the users which match product1,
+        # product2, product3, ..., and then intersect the results,
+        # fetching the first user which matches all of the queries
+        lists_of_users = []
+        for p in properties["products"]:
+            print(p)
+            clauses = []
+            for k, v in p.items():
+                if v.startswith(">"):
+                    clauses.append((getattr(product.Product, k) > v.lstrip(">=")))
+                elif v.startswith("<"):
+                    clauses.append((getattr(product.Product, k) <= v.lstrip("<=")))
+                else:
+                    clauses.append((getattr(product.Product, k) == v.lstrip("=")))
+            query = models.User.select().where(models.User.dirty == False).join(product.Product).where(functools.reduce(operator.and_, clauses))
+            lists_of_users.append(query)
+
+        """
+        From peewee (orm) documentation:
+
+        customers = Customer.select(Customer.city).where(Customer.state == 'KS')
+        stores = Store.select(Store.city).where(Store.state == 'KS')
+
+        # Get all cities in kanasas where we have both customers and stores.
+        cities = (customers & stores).order_by(SQL('city'))
+        """
+
+        # Of interest is noting that the '&' operator has different context:
+        # in WHERE clauses it works like AND
+        # If the left and right side are already built SQL queries, it works
+        # as INTERSECT
+
         try:
-            q = product.Product.select().where(functools.reduce(operator.and_, clauses))
-            user = q.join(models.User).where(models.User.dirty == False).get().user
+            user = functools.reduce(operator.and_, lists_of_users).get()
             user.dirty = True
             user.save()
-            logging.info("Found user for query: %s" % (parameters))
+            logging.info("Found user for query: %s" % (properties))
             return user.cip
         except orm.DoesNotExist:
-            logging.error("No user found for query: %s" % (parameters))
+            logging.error("No user found for query: %s" % (properties))
             return ''
 
     def get_dirty_users(self):
-        delta = time.time() - settings.dirty_user_refresh
+        delta = time.time() - settings.db_dirty_user_refresh
         return [u.cip for u in models.User.select(models.User.cip).where(models.User.dirty == True).where(models.User.lastUpdate < delta).limit(10000)]
 
     def update_products(self, products):

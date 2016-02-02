@@ -48,7 +48,7 @@ function addProductField (e) {
 }
 
 function submitProducts (e) {
-    requestObject = [];
+    requestObject = {"products": []};
     $('div.product').each(function (productPanel) {
         product = {};
         $(this).children('form').each(function (fieldForm) {
@@ -60,7 +60,7 @@ function submitProducts (e) {
             }
         });
         if (!$.isEmptyObject(product)) {
-            requestObject.push(product);
+            requestObject["products"].push(product);
         }
     });
 
