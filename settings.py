@@ -9,6 +9,9 @@ find_user_exec = "python simulate.py"
 # This is what we assume by default the messages received are encoded in
 default_encoding = "utf8"
 
-# Web.py
+# web.py
 web_address = '0.0.0.0'
 web_port = 8080
+
+# batch.py
+batch_default_workers = 16

@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-v", "--verbose", action="store_true", \
         help="Increase output verbosity")
-    parser.add_argument("-w", "--workers", type=int, default=4, \
+    parser.add_argument("-w", "--workers", type=int, default=settings.batch_default_workers, \
         help="Amount of subprocesses to launch which will execute the script")
     parser.add_argument("-x", "--execute", default='./script.sh', \
         help="The utility to be executed (fixed parameters may be specified).")
