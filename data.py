@@ -21,17 +21,13 @@ class Access:
         return product.get_schema()
 
     def get_user_by_properties(self, properties):
+        logging.debug("Get user by properties: %s" % (properties))
 
         # Set default parameters
         for p in properties["products"]:
             for k, v in settings.db_default_properties.items():
                 if k in p.keys(): continue
                 p[k] = v
-
-        import pprint
-
-        pprint.pprint(properties)
-
 
         # For this to work, we need to create an intersection between
         # all products. Meaning, get the users which match product1,
