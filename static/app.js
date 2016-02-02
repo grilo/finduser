@@ -55,10 +55,15 @@ function submitProducts (e) {
             var fieldName = $(this).find('select.fieldName').find(':selected').text();
             var fieldOperator = $(this).find('select.fieldOperator').find(':selected').text();
             var fieldValue = $(this).find('input.fieldValue').val();
-            product[fieldName] = fieldOperator + fieldValue;
+            if (fieldValue != "") {
+                product[fieldName] = fieldOperator + fieldValue;
+            }
         });
-        requestObject.push(product);
+        if (!$.isEmptyObject(product)) {
+            requestObject.push(product);
+        }
     });
+
     var promise = findUser(requestObject);
 
     promise.success(function (response) {
