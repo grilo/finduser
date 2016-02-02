@@ -40,9 +40,7 @@ def touch_user(cip):
 """
 @app.route('/finduser/model')
 def user_model():
-    model = {
-        "product": {}
-    }
+    model = { "product": {} }
     for field_name, field_type in dao.get_product_fields().items():
         model["product"][field_name] = str(field_type.__name__)
     return json.dumps(model)
@@ -54,7 +52,7 @@ def get_users():
     json_obj = json.loads(request)
 
     param_count = 0
-    if k, v in json_obj.items():
+    for k, v in json_obj.items():
         param_count += len(v)
     if param_count == 0:
         return bottle.abort(400, "No query parameters sent, refusing to return a value.")

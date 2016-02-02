@@ -1,0 +1,29 @@
+<div class="panel panel-default">
+
+    <div class="panel-heading">
+        <h3>Request Status</h3>
+    </div>
+
+    <div class="panel-body">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                Help
+            </div>
+            <ul>
+                <li>int: 1000</li>
+                <li>float: 10.0</li>
+                <li>bool: May be "True", "true" or 1. Also, "False", "false" or "0".</li>
+                <li>str: Any text.</li>
+            </ul>
+        </div>
+        <div class="panel panel-warning">
+            <div class="panel-heading">Request</div>
+            <div id="request"></div>
+        </div>
+        <div class="panel panel-warning">
+            <div class="panel-heading">Response</div>
+            <div id="response"></div>
+        </div>
+    </div>
+
+</div>

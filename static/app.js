@@ -2,11 +2,16 @@ function addProduct (e) {
     e.preventDefault();
 
     getProductModel().success(function (response) {
-        var keys = Object.keys(response["product"]);
+        console.log(response);
+        var keys = Object.keys(response.product);
         keys.sort();
+        var fields = [];
+        $.each(keys, function (index, k) {
+            fields.push(k + " (" + response.product[k] + ")")
+        });
 
         getTemplate("product", function (tpl) {
-            var product = $(tpl.render({"fields": keys}));
+            var product = $(tpl.render({"fields": fields}));
             product.find('button').on('click', function (e) {
                 e.target.closest('div.panel').remove();
             });
@@ -14,7 +19,7 @@ function addProduct (e) {
 
             var e = {
                 "target": product.find('div.panel-body'),
-                "data": { "fields": keys },
+                "data": { "fields": fields},
             };
 
             addProductField(e).done(function (response) {
@@ -53,6 +58,7 @@ function submitProducts (e) {
         product = {};
         $(this).children('form').each(function (fieldForm) {
             var fieldName = $(this).find('select.fieldName').find(':selected').text();
+            fieldName = fieldName.replace(/ \(.*/, '');
             var fieldOperator = $(this).find('select.fieldOperator').find(':selected').text();
             var fieldValue = $(this).find('input.fieldValue').val();
             if (fieldValue != "") {
@@ -67,13 +73,29 @@ function submitProducts (e) {
     var promise = findUser(requestObject);
 
     promise.success(function (response) {
-        console.log("Everything OK");
-        console.log(response);
+        $('#request').html("<pre>" + JSON.stringify(requestObject, null, 2) + "</pre>");
+        getTemplate("found", function (tpl) {
+            var error = $(tpl.render(response));
+            error.fadeIn('slow');
+            $('#response').html(error);
+        });
     });
 
     promise.error(function (response) {
-        console.log("Oops, something ugly!");
-        console.log(response);
+        $('#request').html("<pre>" + JSON.stringify(requestObject, null, 2) + "</pre>");
+        if (response.status == 400) {
+            getTemplate("error", function (tpl) {
+                var error = $(tpl.render({}));
+                error.fadeIn('slow');
+                $('#response').html(error);
+            });
+        } else if (response.status == 404) {
+            getTemplate("notfound", function (tpl) {
+                var error = $(tpl.render({}));
+                error.fadeIn('slow');
+                $('#response').html(error);
+            });
+        }
     });
 }
 
@@ -86,6 +108,11 @@ $(window).ready(function () {
         $('#content').prepend(body);
         $('#addProduct').on('click', addProduct);
         $('#submit').on('click', submitProducts);
+        getTemplate("status", function (tpl) {
+            var status = $(tpl.render({}));
+            status.fadeIn('slow');
+            $('#status').append(status);
+        });
     }); // body
 
 });
