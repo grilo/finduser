@@ -24,7 +24,7 @@ class FindUser:
         if "second" not in ts.keys():
             ts["second"] = "00"
         struct_time = time.strptime(" ".join([ts["year"], ts["month"], ts["day"], \
-                        ts["hour"], ts["minute"], ts["second"]]), "%Y %m %d %H %M %S")
+                        str(ts["hour"]), str(ts["minute"]), str(ts["second"])]), "%Y %m %d %H %M %S")
         return time.mktime(struct_time)
 
     def find(self, uuid):
