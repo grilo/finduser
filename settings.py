@@ -5,7 +5,7 @@ default_encoding = "utf8"
 
 # data.py
 # The name of the data file being used
-db_name = 'users.sqlite'
+db_name = 'userschema'
 # How many seconds until we may refresh dirty users
 db_dirty_user_refresh = 300
 # Default parameters which will be inserted automatically in the query
