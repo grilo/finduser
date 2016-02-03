@@ -19,7 +19,7 @@ if __name__ == '__main__':
         help="Increase output verbosity")
     parser.add_argument("-w", "--workers", type=int, default=settings.batch_default_workers, \
         help="Amount of subprocesses to launch which will execute the script")
-    parser.add_argument("-x", "--execute", default='./script.sh', \
+    parser.add_argument("-x", "--execute", default=settings.batch_find_user_exec, \
         help="The utility to be executed (fixed parameters may be specified).")
 
     args = parser.parse_args()
