@@ -7,13 +7,12 @@ import json
 import multiprocessing
 import time
 
-import settings
-
 
 class FindUser:
-    def __init__(self, command, workers=multiprocessing.cpu_count() ** 2):
+    def __init__(self, command, workers=multiprocessing.cpu_count() ** 2, encoding='utf8'):
         self.command = command
         self.workers = workers
+        self.encoding = encoding
 
     def _openDate_to_epoch(self, ts):
         """Convert a dict representing a date into Epoch.
@@ -65,7 +64,7 @@ class FindUser:
             return []
 
         products = []
-        for d in json.loads(stdout.decode(settings.default_encoding)):
+        for d in json.loads(stdout.decode(self.default_encoding)):
             d["user"] = uuid
             if not "openDate" in d.keys():
                 logging.error("The user information seems incorrect: %s" % (d))

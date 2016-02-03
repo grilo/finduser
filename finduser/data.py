@@ -6,23 +6,21 @@ import functools
 import time
 import extlibs.peewee as orm
 
-import models
-import settings
-import schema
-
-class DoesNotExist(orm.DoesNotExist):
-    pass
+import finduser.models
+import finduser.schema
 
 
 class Access:
 
-    def __init__(self):
-        self.product_validator = schema.Validator(models.Product.python_schema())
-        models.db.connect()
-        models.db.create_tables([models.User, models.Product], True)
+    def __init__(self, default_properties, dirty_user_refresh):
+        self.default_properties = default_properties
+        self.dirty_user_refresh = dirty_user_refresh
+        self.product_validator = finduser.schema.Validator(finduser.models.Product.python_schema())
+        finduser.models.db.connect()
+        finduser.models.db.create_tables([finduser.models.User, finduser.models.Product], True)
 
     def get_product_fields(self):
-        return models.Product.python_schema()
+        return finduser.models.Product.python_schema()
 
     def get_user_by_properties(self, properties):
         logging.debug("Get user by properties: %s" % (properties))
@@ -32,7 +30,7 @@ class Access:
         for p in properties["product"]:
             if not self.product_validator.partial(p):
                 raise AssertionError
-            for k, v in settings.db_default_properties.items():
+            for k, v in self.default_properties["product"].items():
                 if k in p.keys(): continue
                 p[k] = v
 
@@ -62,14 +60,14 @@ class Access:
             clauses = []
             for k, v in p.items():
                 if type(v) == bool:
-                    clauses.append((getattr(models.Product, k) == v))
+                    clauses.append((getattr(finduser.models.Product, k) == v))
                 elif v.startswith(">"):
-                    clauses.append((getattr(models.Product, k) > v.lstrip(">=")))
+                    clauses.append((getattr(finduser.models.Product, k) > v.lstrip(">=")))
                 elif v.startswith("<"):
-                    clauses.append((getattr(models.Product, k) <= v.lstrip("<=")))
+                    clauses.append((getattr(finduser.models.Product, k) <= v.lstrip("<=")))
                 else:
-                    clauses.append((getattr(models.Product, k) == v.lstrip("=")))
-            query = models.User.select().where(models.User.dirty == False).join(models.Product).where(functools.reduce(operator.and_, clauses))
+                    clauses.append((getattr(finduser.models.Product, k) == v.lstrip("=")))
+            query = finduser.models.User.select().where(finduser.models.User.dirty == False).join(finduser.models.Product).where(functools.reduce(operator.and_, clauses))
             lists_of_users.append(query)
 
         try:
@@ -81,8 +79,8 @@ class Access:
             raise LookupError
 
     def get_dirty_users(self):
-        delta = time.time() - settings.db_dirty_user_refresh
-        return [u.cip for u in models.User.select(models.User.cip).where(models.User.dirty == True).where(models.User.lastUpdate < delta).limit(10000)]
+        delta = time.time() - self.dirty_user_refresh
+        return [u.cip for u in finduser.models.User.select(finduser.models.User.cip).where(finduser.models.User.dirty == True).where(finduser.models.User.lastUpdate < delta).limit(10000)]
 
     def update_products(self, products):
         if len(products) <= 0: return
@@ -98,15 +96,15 @@ class Access:
         if len(validated) <= 0:
             logging.error("No valid entries found for the user found, refusing any updates.")
 
-        with models.db.atomic():
+        with finduser.models.db.atomic():
             logging.warning("Inserting products for: %s" % (str(products[0]["user"])))
-            q = models.Product.insert_many(validated).upsert(upsert=True)
+            q = finduser.models.Product.insert_many(validated).upsert(upsert=True)
             q.execute()
 
         # Mark the user's data as fresh
-        return models.User.update(dirty=False, lastUpdate=time.time()).where(models.User.cip == products[0]["user"]).execute()
+        return finduser.models.User.update(dirty=False, lastUpdate=time.time()).where(finduser.models.User.cip == products[0]["user"]).execute()
 
 
     def touch_user(self, properties):
-        with models.db.atomic():
-            models.User.insert(**properties).upsert(upsert=True).execute()
+        with finduser.models.db.atomic():
+            finduser.models.User.insert(**properties).upsert(upsert=True).execute()

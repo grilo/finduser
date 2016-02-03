@@ -3,10 +3,8 @@ import extlibs.peewee as orm
 
 import settings
 
-db = orm.SqliteDatabase(settings.db_name, pragmas=(
-        ("busy_timeout", "30000"),
-    )
-)
+db = orm.SqliteDatabase(settings.db_name, pragmas=(("busy_timeout", "30000"),))
+#db = orm.PostgresqlDatabase(settings.db_name, user='postgres', port=5432)
 
 class BaseModel(orm.Model):
     class Meta:
