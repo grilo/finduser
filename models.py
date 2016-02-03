@@ -42,7 +42,8 @@ class Product(BaseModel):
     iban = orm.CharField()
     enableAlias = orm.BooleanField(null=False)
 
-    def python_schema(self):
+    @staticmethod
+    def python_schema():
         return {
             "accNumber": str,
             "openDate": float,
