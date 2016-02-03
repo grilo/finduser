@@ -10,7 +10,7 @@ db_name = 'users.sqlite'
 db_dirty_user_refresh = 300
 # Default parameters which will be inserted automatically in the query
 # unless explicitly overriden by the user
-db_default_properties = { "accBlocked": "=0" }
+db_default_properties = { "accBlocked": False }
 
 # web.py
 web_address = '0.0.0.0'
