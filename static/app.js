@@ -22,7 +22,13 @@ function addProduct (e) {
                 "data": { "fields": fields},
             };
 
-            addProductField(e).done(function (response) {
+            var panelBody = product.find('div.panel-body');
+
+            getTemplate("field", function (tpl) {
+                var field = $(tpl.render({"fields": e.data.fields}));
+                panelBody.append(field);
+                field.fadeIn('slow');
+
                 // We do some tomfoolery here for UX purposes
                 // It breaks a million principles, but it's usable
                 var button = product.find('button.btn-danger');
@@ -33,20 +39,24 @@ function addProduct (e) {
                 span.removeClass('glyphicon-minus-sign');
                 span.addClass('glyphicon-plus-sign');
 
-                button.off('click').on('click', e.data, addProductField);
+                button.on('click', e.data, addProductField);
+
             });
+
 
         }); // product
     }); // getProductModel
 }
 
 function addProductField (e) {
+    e.preventDefault();
     var panelBody = $(e.target.closest('div.panel-body'));
     return getTemplate("field", function (tpl) {
         var field = $(tpl.render({"fields": e.data.fields}));
         field.fadeIn('slow');
         panelBody.append(field);
         field.find('span.glyphicon-minus-sign').parent().on('click', function (e) {
+            e.preventDefault();
             field.remove();
         });
     });
