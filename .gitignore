@@ -16,3 +16,4 @@ simulate.py
 makeusers.*
 *.sh
 *sqlite-journal
+userschema
