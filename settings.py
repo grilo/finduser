@@ -10,7 +10,11 @@ db_name = 'userschema'
 db_dirty_user_refresh = 300
 # Default parameters which will be inserted automatically in the query
 # unless explicitly overriden by the user
-db_default_properties = { "accBlocked": False }
+db_default_properties = {
+    "product": {
+        "accBlocked": False
+    }
+}
 
 # web.py
 web_address = '0.0.0.0'
