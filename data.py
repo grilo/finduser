@@ -26,7 +26,7 @@ class Access:
 
     def get_user_by_properties(self, properties):
         logging.debug("Get user by properties: %s" % (properties))
-        assert "product" in properties.keys()
+        assert type(properties) == dict
 
         # Set default parameters
         for p in properties["product"]:
