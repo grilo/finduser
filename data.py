@@ -28,7 +28,7 @@ class Access:
         logging.debug("Get user by properties: %s" % (properties))
         assert type(properties) == dict
 
-        # Set default parameters
+        # Set default parameters such as "accBlocked: False"
         for p in properties["product"]:
             if not self.product_validator.partial(p):
                 raise AssertionError
@@ -36,26 +36,13 @@ class Access:
                 if k in p.keys(): continue
                 p[k] = v
 
-        # For this to work, we need to create an intersection between
-        # all products. Meaning, get the users which match product1,
-        # product2, product3, ..., and then intersect the results,
-        # fetching the first user which matches all of the queries
-        lists_of_users = []
-        for p in properties["product"]:
-            clauses = []
-            for k, v in p.items():
-                if type(v) == bool:
-                    clauses.append((getattr(models.Product, k) == v))
-                elif v.startswith(">"):
-                    clauses.append((getattr(models.Product, k) > v.lstrip(">=")))
-                elif v.startswith("<"):
-                    clauses.append((getattr(models.Product, k) <= v.lstrip("<=")))
-                else:
-                    clauses.append((getattr(models.Product, k) == v.lstrip("=")))
-            query = models.User.select().where(models.User.dirty == False).join(models.Product).where(functools.reduce(operator.and_, clauses))
-            lists_of_users.append(query)
 
         """
+        For this to work, we need to create an intersection between
+        all products. Meaning, get the users which match product1,
+        product2, product3, ..., and then intersect the results,
+        fetching the first user which matches all of the queries
+
         Of interest is noting that the '&' operator has different context:
         in WHERE clauses it works like AND
         If the left and right side are already built SQL queries, it works
@@ -70,6 +57,20 @@ class Access:
         # Get all cities in kanasas where we have both customers and stores.
         cities = (customers & stores).order_by(SQL('city'))
         """
+        lists_of_users = []
+        for p in properties["product"]:
+            clauses = []
+            for k, v in p.items():
+                if type(v) == bool:
+                    clauses.append((getattr(models.Product, k) == v))
+                elif v.startswith(">"):
+                    clauses.append((getattr(models.Product, k) > v.lstrip(">=")))
+                elif v.startswith("<"):
+                    clauses.append((getattr(models.Product, k) <= v.lstrip("<=")))
+                else:
+                    clauses.append((getattr(models.Product, k) == v.lstrip("=")))
+            query = models.User.select().where(models.User.dirty == False).join(models.Product).where(functools.reduce(operator.and_, clauses))
+            lists_of_users.append(query)
 
         try:
             user = functools.reduce(operator.and_, lists_of_users).get()
@@ -97,8 +98,8 @@ class Access:
         if len(validated) <= 0:
             logging.error("No valid entries found for the user found, refusing any updates.")
 
-        logging.warning("Inserting products for: %s" % (str(products[0]["user"])))
         with models.db.atomic():
+            logging.warning("Inserting products for: %s" % (str(products[0]["user"])))
             q = models.Product.insert_many(validated).upsert(upsert=True)
             q.execute()
 
