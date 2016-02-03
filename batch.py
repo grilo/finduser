@@ -28,7 +28,7 @@ if __name__ == '__main__':
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    f = finduser.FindUser(settings.batch_find_user_exec, args.workers)
+    f = finduser.FindUser(args.execute, args.workers)
     dao = data.Access()
 
     while True:
