@@ -4,7 +4,7 @@ import logging
 import json
 import extlibs.bottle as bottle
 
-import data
+import finduser.data
 import settings
 
 app = bottle.Bottle()

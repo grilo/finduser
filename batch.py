@@ -6,8 +6,8 @@ import argparse
 import sys
 import time
 
-import finduser
-import data
+import finduser.finduser
+import finduser.data
 import settings
 
 
@@ -28,8 +28,8 @@ if __name__ == '__main__':
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    f = finduser.FindUser(args.execute, args.workers)
-    dao = data.Access()
+    f = finduser.finduser.FindUser(args.execute, args.workers, settings.default_encoding)
+    dao = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
 
     while True:
         # Get the list of dirty users which represent users with tainted
