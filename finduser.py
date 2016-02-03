@@ -11,7 +11,7 @@ import settings
 
 
 class FindUser:
-    def __init__(self, command='./script.sh', workers=multiprocessing.cpu_count() ** 2):
+    def __init__(self, command, workers=multiprocessing.cpu_count() ** 2):
         self.command = command
         self.workers = workers
 
