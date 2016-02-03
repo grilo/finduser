@@ -49,19 +49,18 @@ def user_model():
 def get_users():
     request = bottle.request.body.read().decode(settings.default_encoding)
     logging.info("Find user: %s" % (request))
-    json_obj = json.loads(request)
+    try:
+        json_obj = json.loads(request)
+    except json.decoder.JSONDecodeError:
+        return bottle.abort(400, "I'm unable to parse the JSON string sent: %s" % (request))
 
-    param_count = 0
-    for k, v in json_obj.items():
-        param_count += len(v)
-    if param_count == 0:
-        return bottle.abort(400, "No query parameters sent, refusing to return a value.")
-
-    cip = dao.get_user_by_properties(json_obj)
-    if cip == "":
-        return bottle.abort(404, "Unable to find a user matching the criteriae.")
-
-    return json.dumps(cip)
+    try:
+        cip = dao.get_user_by_properties(json_obj)
+        return json.dumps(cip)
+    except AssertionError:
+        return bottle.abort(400, "JSON being sent doesn't match the expected schema: %s" % (request))
+    except LookupError:
+        return bottle.abort(404, "Unable to find a user matching the criteriae: %s." % (request))
 
 
 if __name__ == '__main__':
