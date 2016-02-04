@@ -30,10 +30,10 @@ def static_files(filename):
 def hello():
     return bottle.static_file('index.html', root='static/')
 
-@APP.route('/user/<cip>', method=['POST'])
-def touch_user(cip):
-    """Enforce the database the update the information for user <cip>."""
-    DAO.touch_user({"cip": cip, "dirty": True, "lastUpdate": 0.0})
+@APP.route('/user/<personId>', method=['POST'])
+def refresh_user(personId):
+    """Enforce the database the update the information for user <personId>."""
+    DAO.refresh_user(personId)
 
 @APP.route('/finduser/model')
 def user_model():
@@ -56,8 +56,8 @@ def get_users():
             "I'm unable to parse the JSON string sent: %s" % (request))
 
     try:
-        cip = DAO.get_user_by_properties(json_obj)
-        return json.dumps(cip)
+        personId = DAO.get_user_by_properties(json_obj)
+        return json.dumps(personId)
     except AssertionError:
         return bottle.abort(400, \
             "JSON being sent doesn't match the expected schema: %s" % (request))
@@ -66,5 +66,6 @@ def get_users():
 
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.basicConfig(format=settings.log_format)
+    logging.getLogger().setLevel(getattr(logging, settings.log_level.upper()))
     bottle.run(APP, host=settings.web_address, port=settings.web_port, debug=True)
