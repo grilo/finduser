@@ -14,34 +14,35 @@ class GTM:
         self.workers = workers
         self.encoding = encoding
 
-    def _openDate_to_epoch(self, ts):
-        """Convert a dict representing a date into Epoch.
+    def normalize_json(self, personId, p):
+        product = p.copy()
+        product["user"] = personId
 
-        Because RDBMS don't like hierarchical data.
+        if not "openDate" in product.keys():
+            # Set the date for the original epoch
+            timestamp = "1970 01 01 00 00 00"
+        else:
+            date = product["openDate"]
+            # Normalize the date from 'wtf' to 'epoch'
+            if "dayOfMonth" in date.keys():
+                date["day"] = date.pop("dayOfMonth")
+            if "hourOfDay" in date.keys():
+                date["day"] = date.pop("hourOfDay")
+            if not "second" in date.keys():
+                date["second"] = "0"
+            date["month"] = str(int(date["month"]) + 1)
 
-        Args:
-            ts (dict): The date in a whatever format.
+            for k, v in date.items():
+                date[k] = str(v)
+            timestamp = " ".join([
+                            date["year"], date["month"], date["day"],
+                            date["hour"], date["minute"], date["second"],
+                        ])
 
-        Returns:
-            float: The epoch for that date.
+        product["openDate"] = time.mktime(time.strptime(timestamp, "%Y %m %d %H %M %S"))
+        return product
 
-        """
-        # Also normalize the data being sent which always uniform
-        for k, v in ts.items():
-            ts[k] = str(v)
-            if k == "dayOfMonth":
-                ts["day"] = ts[k]
-            elif k == "hourOfDay":
-                ts["hour"] = ts[k]
-
-        if "second" not in ts.keys():
-            ts["second"] = "00"
-
-        time_string = " ".join([ts["year"], ts["month"],  ts["day"], \
-                                ts["hour"], ts["minute"], ts["second"]])
-        return time.mktime(time.strptime(time_string, "%Y %m %d %H %M %S"))
-
-    def find(self, uuid):
+    def find(self, personId):
         """Execute a CLI utility and return the results.
 
         This is the meat of the find user. Since Python has much poorer drivers
@@ -49,29 +50,24 @@ class GTM:
         which does the work for us and use Python to glue everything together.
 
         Args:
-            uuid (str): A parameter passed to the CLI util (self.command).
+            personId (str): A parameter passed to the CLI util (self.command).
 
         Returns:
             list(dict): The [somewhat altered] JSON output of the utility.
         """
-        logging.warn("Querying for user %d" % (uuid))
-        cmd = " ".join([self.command, str(uuid)])
+        logging.warn("Querying for user %d" % (personId))
+        cmd = " ".join([self.command, str(personId)])
 
         try:
-            stdout = subprocess.check_output(shlex.split(cmd), stderr= subprocess.STDOUT)
+            raw_products = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            logging.error("User doesn't seem to exist: %s" % (uuid))
+            logging.error("User doesn't seem to exist: %s" % (personId))
             return []
 
-        products = []
-        for d in json.loads(stdout.decode(self.default_encoding)):
-            d["user"] = uuid
-            if not "openDate" in d.keys():
-                logging.error("The user information seems incorrect: %s" % (d))
-                return []
-            d["openDate"] = self._openDate_to_epoch(d["openDate"])
-            products.append(d)
-        return products
+        product_list = []
+        for p in json.loads(raw_products.decode(self.encoding)):
+            product_list.append(self.normalize_json(personId, p))
+        return (personId, product_list)
 
     def parallel_find(self, iterator):
         """In yer face GIL!"""
