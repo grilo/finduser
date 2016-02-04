@@ -13,6 +13,7 @@ class GTM:
         self.command = command
         self.workers = workers
         self.encoding = encoding
+        logging.info("GTM Product finder initialized.")
 
     def normalize_json(self, personId, p):
         product = p.copy()
@@ -67,6 +68,7 @@ class GTM:
         product_list = []
         for p in json.loads(raw_products.decode(self.encoding)):
             product_list.append(self.normalize_json(personId, p))
+        logging.debug("Retrieved (%d) products for user (%s)" % (len(product_list), personId))
         return (personId, product_list)
 
     def parallel_find(self, iterator):
