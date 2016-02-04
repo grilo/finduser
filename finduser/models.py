@@ -11,7 +11,7 @@ class BaseModel(orm.Model):
         database = db
 
 class User(BaseModel):
-    cip = orm.BigIntegerField(primary_key=True)
+    personId = orm.BigIntegerField(primary_key=True)
     dirty = orm.BooleanField(default=True)
     lastUpdate = orm.DateTimeField(null=True)
 
