@@ -8,7 +8,7 @@ import multiprocessing
 import time
 
 
-class FindUser:
+class GTM:
     def __init__(self, command, workers=multiprocessing.cpu_count() ** 2, encoding='utf8'):
         self.command = command
         self.workers = workers
@@ -80,11 +80,3 @@ class FindUser:
             yield i
         proc_pool.close()
         proc_pool.join()
-
-
-if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.DEBUG)
-    f = FindUser("python simulate.py")
-    #import pprint
-    #pprint.pprint(f.find(4))
-    #[x for x in f.parallel_find(range(100))]
