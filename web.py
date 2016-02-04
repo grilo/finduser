@@ -4,8 +4,8 @@ import logging
 import json
 import extlibs.bottle as bottle
 
-import finduser.data
 import settings
+import finduser.data
 
 APP = bottle.Bottle()
 DAO = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
