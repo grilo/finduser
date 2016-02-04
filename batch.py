@@ -17,7 +17,6 @@ Example:
 """
 
 import logging
-logging.basicConfig(format='%(asctime)s::%(levelname)s::%(message)s')
 import argparse
 import time
 
@@ -42,7 +41,8 @@ def main():
 
     args = parser.parse_args()
 
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(format=settings.log_format)
+    logging.getLogger().setLevel(getattr(logging, settings.log_level.upper()))
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -52,8 +52,8 @@ def main():
     while True:
         # Get the list of dirty users which represent users with tainted
         # or outdated info, and freshen their data by querying GTM directly
-        for products in gtm_product.parallel_find(dao.get_dirty_users()):
-            dao.update_products(products)
+        for personId, products in gtm_product.parallel_find(dao.get_dirty_users()):
+            dao.update_products(personId, products)
 
         logging.info("All users processed, taking a nap...")
         time.sleep(5)
