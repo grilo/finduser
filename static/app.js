@@ -2,6 +2,7 @@ function addProduct (e) {
     e.preventDefault();
 
     getDataModel().success(function (response) {
+        console.log(response);
         var keys = Object.keys(response.product);
         keys.sort();
         var fields = [];
@@ -38,7 +39,7 @@ function addProduct (e) {
                 span.removeClass('glyphicon-minus-sign');
                 span.addClass('glyphicon-plus-sign');
 
-                button.on('click', e.data, addProductField);
+                button.on('click', e.data, addField);
 
             });
 
@@ -47,7 +48,7 @@ function addProduct (e) {
     }); // getProductModel
 }
 
-function addProductField (e) {
+function addField (e) {
     e.preventDefault();
     var panelBody = $(e.target.closest('div.panel-body'));
     return getTemplate("field", function (tpl) {
@@ -61,7 +62,7 @@ function addProductField (e) {
     });
 }
 
-function submitProducts (e) {
+function submitForm (e) {
     requestObject = {"product": []};
     $('div.product').each(function (productPanel) {
         product = {};
@@ -116,7 +117,7 @@ $(window).ready(function () {
         body.fadeIn('slow');
         $('#content').prepend(body);
         $('#addProduct').on('click', addProduct);
-        $('#submit').on('click', submitProducts);
+        $('#submit').on('click', submitForm);
         getTemplate("status", function (tpl) {
             var status = $(tpl.render({}));
             status.fadeIn('slow');

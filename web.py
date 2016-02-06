@@ -47,10 +47,7 @@ def user_model():
     for name, plugin in PLUGINS.get_plugins().items():
         model[name] = {}
         for field_name, field_type in plugin.get_schema().items():
-            if field_type == 'date':
-                model[name][field_name] = 'date'
-            else:
-                model[name][field_name] = str(field_type.__name__)
+            model[name][field_name] = field_type
     return json.dumps(model)
 
 @APP.route('/finduser', method=['POST'])
