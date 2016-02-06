@@ -1,4 +1,4 @@
-function getProductModel() {
+function getDataModel() {
     return $.ajax({
         type: 'GET', cache: 'false', dataType: 'json',
         url: '/finduser/model',

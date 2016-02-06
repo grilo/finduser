@@ -9,7 +9,6 @@ import re
 import extlibs.peewee as orm
 
 import finduser.models
-import finduser.schema
 
 
 class Access:
@@ -18,30 +17,64 @@ class Access:
         logging.info("Data Access Object initialized.")
         self.default_properties = default_properties
         self.dirty_user_refresh = dirty_user_refresh
-        self.product_validator = finduser.schema.Validator(finduser.models.Product.python_schema())
+        self.dynamic_models = {}
         finduser.models.db.connect()
-        finduser.models.db.create_tables([finduser.models.User, finduser.models.Product], True)
+        finduser.models.db.create_tables([finduser.models.User], True)
+
+    def generate_model(self, table, properties):
+        logging.info("Generating model for (%s)." % (table))
+        class DynamicTable(finduser.models.BaseModel):
+            user = orm.ForeignKeyField(finduser.models.User, related_name=table)
+
+        for k, v in properties.items():
+            orm_field = None
+            if v == 'bool':
+                orm_field = 'Boolean'
+            elif v == 'date':
+                orm_field = 'DateTime'
+            elif v == 'str':
+                orm_field = 'Char'
+            elif v == 'float':
+                orm_field = 'Double'
+            elif v == 'int':
+                orm_field = 'Integer'
+            else:
+                logging.error("Unknown field type (%s). Unable to create model for table (%s)." % (v, table))
+                raise AttributeError
+
+            field = getattr(orm, orm_field + 'Field')
+            field().add_to_class(DynamicTable, k)
+
+        finduser.models.db.create_tables([DynamicTable], True)
+        self.dynamic_models[table] = DynamicTable
+
+    def _get_table_model(self, table):
+        return self.dynamic_models[table]
 
     def _dbIO(self, query):
         """Database IO isolation."""
         logging.debug("DBIO: %s" % query)
         try:
             return query.execute()
-        except peewee.OperationalError:
+        except orm.OperationalError:
             logging.critical("Unable to perform database update, probably due to locking: %s" % (query))
             raise IOError
 
     def _split_operator_value(self, expression):
         """Parse a string, return a tuple of (operator, value)."""
-        # Don't do weird stuff for booleans
-        if type(expression) == bool:
-            return '', expression
+        op, new_value = '', str(expression)
 
         # We have no match, this means there's no operator attached
-        m = re.search('([<=>]+)(.*)', expression)
-        if m is None:
-            return '', expression
-        return m.group(1), m.group(2)
+        m = re.search('([<=>]+)(.*)', new_value)
+        if not m is None:
+            op, new_value = m.group(1), m.group(2)
+        # bool(str) doesn't work
+        if new_value == "True":
+            return '', True
+        elif new_value == "False":
+            return '', False
+        else:
+            return op, new_value
 
     def get_dirty_users(self):
         """Returns a list of personIds that have tainted data (used by test cases)."""
@@ -61,11 +94,7 @@ class Access:
         with finduser.models.db.atomic():
             self._dbIO(finduser.models.User.insert(**properties).upsert(upsert=True))
 
-    def get_product_fields(self):
-        logging.debug("Product schema requested.")
-        return finduser.models.Product.python_schema()
-
-    def get_product_query(self, raw_product):
+    def build_query(self, table, raw_properties):
         """Generate a query which matches the users for this given product.
 
         We also inject any default values if the user hasn't overriden them,
@@ -75,45 +104,46 @@ class Access:
         build an actual query).
 
         Args:
-            raw_product (dict): { accBalance: >=0, accBlocked: =1, ...}
+            table (str): The table to look for (product, movements, etc.)
+            raw_properties (dict): { accBalance: >=0, accBlocked: =1, ...}
                 Note: boolean values withouth an operator are also supported
 
         Returns:
             ORM query (peewee.Query)
         """
         clauses = []
-        product = raw_product.copy()
+        properties = raw_properties.copy()
 
         # Defaults
-        for k, v in self.default_properties["product"].items():
-            if not k in product.keys():
-                product[k] = v
+        for k, v in self.default_properties[table].items():
+            if not k in properties.keys():
+                properties[k] = v
 
         # Validate and build query
-        for k, v in product.items():
+        for k, v in properties.items():
             try:
                 op, v = self._split_operator_value(v)
             except TypeError:
                 logging.critical("Unable to split operator and value for: %s" % (v))
                 raise TypeError
 
-            if not self.product_validator.partial({k: v}):
-                raise AssertionError
-
             if op.startswith(">"):
-                clauses.append((getattr(finduser.models.Product, k) >= v))
+                clauses.append((getattr(self._get_table_model(table), k) >= v))
             elif op.startswith("<"):
-                clauses.append((getattr(finduser.models.Product, k) <= v))
+                clauses.append((getattr(self._get_table_model(table), k) <= v))
             else:
-                clauses.append((getattr(finduser.models.Product, k) == v))
+                clauses.append((getattr(self._get_table_model(table), k) == v))
 
-        return finduser.models.User.select() \
-                .where(finduser.models.User.dirty == False) \
-                .join(finduser.models.Product) \
-                .where(functools.reduce(operator.and_, clauses))
+        q = finduser.models.User.select() \
+            .where(finduser.models.User.dirty == False) \
+            .join(self._get_table_model(table)) \
+            .where(functools.reduce(operator.and_, clauses))
+        return q
 
-    def update_products(self, personId, products):
-        """Update the personId's products.
+
+
+    def update(self, personId, results):
+        """Update the personId's products (or movements, or something else).
 
         This is usually invoked as soon as the GTM.Finder process collects the data.
 
@@ -124,26 +154,19 @@ class Access:
         Returns:
             (int) The number of rows updated
         """
-        if len(products) <= 0:
-            # Either the user doesn't exist or it has no products,
-            # we mark it as fresh and return
-            return self._dbIO(finduser.models.User.update(dirty=False, lastUpdate=time.time()) \
-                        .where(finduser.models.User.personId == personId))
+        for table, values in results.items():
 
-        # Ensure that the data is actually good for insertion
-        valid_products = [p for p in products if self.product_validator.full(p)]
-        if len(valid_products) <= 0:
-            logging.error("No valid entries found for personId (%s), refusing updates." % (personId))
-            return
+            if len(values) <= 0: continue
 
-        with finduser.models.db.atomic():
-            logging.warning("Inserting products (%d) for: %s" % (len(valid_products), personId))
-            q = finduser.models.Product.insert_many(valid_products).upsert(upsert=True)
-            self._dbIO(q)
+            with finduser.models.db.atomic():
+                logging.warning("Inserting (%s) (%d) for: %s" % (table, len(values), personId))
+                q = self._get_table_model(table).insert_many(values).upsert(upsert=True)
+                self._dbIO(q)
 
         # Mark the user's data as fresh
         return self._dbIO(finduser.models.User.update(dirty=False, lastUpdate=time.time()) \
                     .where(finduser.models.User.personId== personId))
+
 
     def get_user_by_properties(self, properties):
         """Get a user which matches ALL properties (AND clauses).
@@ -183,15 +206,18 @@ class Access:
         assert type(properties) == dict
 
         lists_of_users = []
-        for product in properties["product"]:
-            lists_of_users.append(self.get_product_query(product))
-
+        for table, values in properties.items():
+            for val in values:
+                lists_of_users.append(self.build_query(table, val))
 
         try:
             user = self._dbIO(functools.reduce(operator.and_, lists_of_users).limit(1)).next()
-            logging.info("Found user: %s" % (user.personId))
-            self.refresh_user(user.personId, time.time())
-            return user.personId
         except orm.DoesNotExist:
             logging.warning("Unable to find any personId matching the criteria.")
             raise LookupError
+        except StopIteration:
+            logging.warning("Unable to find any personId matching the criteria.")
+            raise LookupError
+        logging.info("Found user: %s" % (user.personId))
+        self.refresh_user(user.personId, time.time())
+        return user.personId

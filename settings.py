@@ -4,6 +4,7 @@
 default_encoding = "utf8"
 log_format = '%(asctime)s::%(levelname)s::%(message)s'
 log_level = 'INFO'
+plugins_path = 'plugins'
 
 # data.py
 # The name of the data file being used

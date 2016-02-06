@@ -6,14 +6,19 @@ import extlibs.bottle as bottle
 
 import settings
 import finduser.data
+import finduser.plugin
 
 APP = bottle.Bottle()
 DAO = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
+PLUGINS = finduser.plugin.Manager(settings.plugins_path)
+for k, v in PLUGINS.get_plugins().items():
+    DAO.generate_model(k, v.get_schema())
+
 
 @APP.hook('after_request')
 def enable_cors():
-    """
-    You need to add some headers to each request.
+    """ You need to add some headers to each request.
+
     Don't use the wildcard '*' for Access-Control-Allow-Origin in production.
     """
     bottle.response.headers['Access-Control-Allow-Origin'] = '*'
@@ -37,12 +42,15 @@ def refresh_user(personId):
 
 @APP.route('/finduser/model')
 def user_model():
-    """Model to build the user interfaces."""
-    model = {
-        "product": {}
-    }
-    for field_name, field_type in DAO.get_product_fields().items():
-        model["product"][field_name] = str(field_type.__name__)
+    """Model to build the user interface."""
+    model = {}
+    for name, plugin in PLUGINS.get_plugins().items():
+        model[name] = {}
+        for field_name, field_type in plugin.get_schema().items():
+            if field_type == 'date':
+                model[name][field_name] = 'date'
+            else:
+                model[name][field_name] = str(field_type.__name__)
     return json.dumps(model)
 
 @APP.route('/finduser', method=['POST'])

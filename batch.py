@@ -19,10 +19,11 @@ Example:
 import logging
 import argparse
 import time
+import multiprocessing
 
-import finduser.product
 import finduser.data
 import settings
+import finduser.plugin
 
 
 def main():
@@ -46,14 +47,28 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    gtm_product = finduser.product.GTM(args.execute, args.workers, settings.default_encoding)
+    plugins = finduser.plugin.Manager(settings.plugins_path)
     dao = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
+
+    for k, v in plugins.get_plugins().items():
+        dao.generate_model(k, v.get_schema())
 
     while True:
         # Get the list of dirty users which represent users with tainted
         # or outdated info, and freshen their data by querying GTM directly
-        for personId, products in gtm_product.parallel_find(dao.get_dirty_users()):
-            dao.update_products(personId, products)
+
+        """In yer face GIL!"""
+        with multiprocessing.Pool(args.workers) as proc_pool:
+            for i in proc_pool.imap_unordered(plugins.find_all, dao.get_dirty_users()):
+                personId, results = i
+                try:
+                    dao.update(personId, results)
+                except IOError:
+                    logging.critical("Critical error found while trying to update the database.")
+                    import sys
+                    sys.exit(1)
+            proc_pool.close()
+            proc_pool.join()
 
         logging.info("All users processed, taking a nap...")
         time.sleep(5)

@@ -1,8 +1,7 @@
 function addProduct (e) {
     e.preventDefault();
 
-    getProductModel().success(function (response) {
-        console.log(response);
+    getDataModel().success(function (response) {
         var keys = Object.keys(response.product);
         keys.sort();
         var fields = [];
