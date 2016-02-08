@@ -6,11 +6,13 @@
 
     <div class="panel-body">
 
+        <!--
         <form>
             <div id="productList" class="form-group">
                 <button id="addProduct" type="submit" class="btn btn-default">Add Product</button>
             </div>
         </form>
+        -->
 
     </div>
 
