@@ -113,7 +113,7 @@ class Plugin:
         """
         if self.command is None: raise NotImplementedError
 
-        logging.warn("Retrieving (%s) for user %d" % (self.__class__.__name__, personId))
+        logging.debug("Retrieving (%s) for user %d" % (self.__class__.__name__, personId))
         cmd = " ".join([self.command, str(personId)])
 
         try:

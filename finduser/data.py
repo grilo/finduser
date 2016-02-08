@@ -88,7 +88,7 @@ class Access:
 
     def refresh_user(self, personId, lastUpdate=0.0):
         """Mark a user to be refreshed, lastUpdate will control exactly when."""
-        logging.info("Requesting user refresh: %s" % personId)
+        logging.debug("Requesting user refresh: %s" % personId)
         properties = {"personId": personId, "dirty": True, "lastUpdate": lastUpdate}
 
         with finduser.models.db.atomic():
@@ -159,7 +159,7 @@ class Access:
             if len(values) <= 0: continue
 
             with finduser.models.db.atomic():
-                logging.warning("Inserting (%s) (%d) for: %s" % (table, len(values), personId))
+                logging.debug("Inserting (%s) (%d) for: %s" % (table, len(values), personId))
                 q = self._get_table_model(table).insert_many(values).upsert(upsert=True)
                 self._dbIO(q)
 
