@@ -20,10 +20,12 @@ import logging
 import argparse
 import time
 import multiprocessing
+import os
 
 import finduser.data
 import settings
 import finduser.plugin
+import finduser.web
 
 
 def main():
@@ -47,15 +49,21 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    plugins = finduser.plugin.Manager(settings.plugins_path)
     dao = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
+    plugins = finduser.plugin.Manager(settings.plugins_path)
 
     for k, v in plugins.get_plugins().items():
         dao.generate_model(k, v.get_schema())
 
+    logging.info("Starting web server...")
+    webserver = multiprocessing.Process(target=finduser.web.main, args=(dao, plugins))
+    webserver.start()
+
     while True:
         # Get the list of dirty users which represent users with tainted
         # or outdated info, and freshen their data by querying GTM directly
+
+        update_count = 0
 
         """In yer face GIL!"""
         with multiprocessing.Pool(args.workers) as proc_pool:
@@ -63,6 +71,7 @@ def main():
                 personId, results = i
                 try:
                     dao.update(personId, results)
+                    update_count += 1
                 except IOError:
                     logging.critical("Critical error found while trying to update the database.")
                     import sys
@@ -70,10 +79,10 @@ def main():
             proc_pool.close()
             proc_pool.join()
 
-        logging.info("All users processed, taking a nap...")
+        logging.info("Updated %d users, taking a nap..." % (update_count))
         time.sleep(5)
+    os.kill(webserver.pid)
 
 
 if __name__ == '__main__':
     main()
-
