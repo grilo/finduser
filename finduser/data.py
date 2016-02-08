@@ -205,6 +205,13 @@ class Access:
         logging.info("Get user by properties: %s" % (properties))
         assert type(properties) == dict
 
+        # Make sure we have at least 1 property to look for, otherwise
+        # abort the operation
+        prop_count = sum([len(v) for v in properties.values()])
+        if prop_count <= 0:
+            logging.error("No properties have been specified: %s" % (properties))
+            raise LookupError
+
         lists_of_users = []
         for table, values in properties.items():
             for val in values:
