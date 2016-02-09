@@ -2,6 +2,7 @@
 
 import logging
 import json
+import os
 import extlibs.bottle as bottle
 
 import settings
@@ -13,6 +14,8 @@ def main(dao, plugin_manager):
     app = bottle.Bottle()
     logging.basicConfig(format=settings.log_format)
     logging.getLogger().setLevel(getattr(logging, settings.log_level.upper()))
+
+    root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'static')
 
     @app.hook('after_request')
     def enable_cors():
@@ -28,11 +31,11 @@ def main(dao, plugin_manager):
 
     @app.route('/<filename:re:.*\.(css|js|jpg|png|gif|ico|ttf|eot|woff|woff2|svg|jsr|html)>')
     def static_files(filename):
-        return bottle.static_file(filename, root='static/')
+        return bottle.static_file(filename, root=root_dir)
 
     @app.route('/')
     def hello():
-        return bottle.static_file('index.html', root='static/')
+        return bottle.static_file('index.html', root=root_dir)
 
     @app.route('/user/<personId>', method=['POST'])
     def refresh_user(personId):

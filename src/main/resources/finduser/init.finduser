@@ -11,7 +11,7 @@ set -o pipefail
 
 FINDUSER_DIR=/opt/finduser
 LOGFILE=/var/log/finduser
-CMD="python3 '${FINDUSER_DIR}/batch.py'"
+CMD="python3 ${FINDUSER_DIR}/batch.py"
 
 function get_pid {
     # This will probably return multiple processes (two, actually, batch and web)
@@ -22,7 +22,7 @@ function start {
     echo "Starting FindUser"
 	touch "${LOGFILE}"
 	[ $? -ne 0 ] && echo "Unable to create ${LOGFILE}. Aborting..." && exit 1
-    nohup "${CMD}" < /dev/null 2>&1 > "${LOGFILE}" &
+    nohup ${CMD} < /dev/null 2>&1 > "${LOGFILE}" &
     disown
     if [ $? -ne 0 -o -z "$(get_pid)" ] ; then
         echo "Error starting FindUser" && exit 1
