@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# finduser      FindUser
+#
+# chkconfig: 345 70 30
+# description: FindUser utility for realtime search of test users
+# processname: finduser
+
+set -eu
+set -o pipefail
+
+FINDUSER_DIR=/opt/finduser
+LOGFILE=/var/log/finduser
+CMD="python3 '${FINDUSER_DIR}/batch.py'"
+
+function get_pid {
+    # This will probably return multiple processes (two, actually, batch and web)
+    echo "$(ps -eaf | grep python | grep batch.py | awk '{print $2}')"
+}
+
+function start {
+    echo "Starting FindUser"
+	touch "${LOGFILE}"
+	[ $? -ne 0 ] && echo "Unable to create ${LOGFILE}. Aborting..." && exit 1
+    nohup "${CMD}" < /dev/null 2>&1 > "${LOGFILE}" &
+    disown
+    if [ $? -ne 0 -o -z "$(get_pid)" ] ; then
+        echo "Error starting FindUser" && exit 1
+    fi
+}
+
+function stop {
+    echo "Shutting down FindUser"
+    for pid in $(get_pid) ; do
+        kill $pid
+        [ $? -ne 0 ] && echo "Error stopping FindUser" && exit 1
+	done
+}
+
+function status {
+        echo "Checking FindUser status..."
+        pid=$(get_pid)
+        if [ ! -z "$pid" ] ; then
+            echo "FindUser is running."
+        else
+            echo "FindUser is NOT running."
+        fi
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    status) status ;;
+    restart) stop; start ;;
+    *) echo "Usage: $0 {start|stop|status|restart}" && exit 1 ;;
+esac
+exit 0
