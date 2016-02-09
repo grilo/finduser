@@ -10,11 +10,11 @@ import json
 
 class Manager:
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, plugins_dir):
+        self.plugins_dir = plugins_dir
         self.plugins = {}
-        for name, p in self.scandir().items():
-            plugin = self.load_plugin(p)
+        for name, plugin_path in self.scandir().items():
+            plugin = self.load_plugin(name, plugin_path)
             if self.plugin_test(plugin):
                 logging.info("Successfully loaded plugin: %s" % (plugin.__module__))
                 self.plugins[name] = plugin
@@ -24,12 +24,12 @@ class Manager:
 
     def scandir(self):
         plugins = {}
-        for directory in os.listdir(self.path):
+        for directory in os.listdir(self.plugins_dir):
             if directory.startswith("__"): continue
 
-            plugin_path = os.path.join(self.path, directory, 'plugin.py')
+            plugin_path = os.path.join(self.plugins_dir, directory, 'plugin.py')
             if os.path.isfile(plugin_path):
-                plugins[directory] = plugin_path.replace("/", ".").rstrip(".py")
+                plugins[directory] = plugin_path
         if len(plugins.keys()) <= 0:
             logging.warning("No plugins found.")
         return plugins
@@ -51,16 +51,16 @@ class Manager:
         if errors > 0: return False
         return True
 
-    def load_plugin(self, p):
+    def load_plugin(self, name, path):
         try:
-            module = importlib.import_module(p)
+            module = importlib.machinery.SourceFileLoader(name, path).load_module()
             try:
                 return getattr(module, 'Find')()
             except AttributeError:
                 logging.error("Unable to find a 'Find' class.")
                 return None
         except ImportError as e:
-            logging.error("Unable to load plugin: %s" % (p))
+            logging.error("Unable to load plugin: %s" % (path))
             return None
 
     def find_all(self, personId):

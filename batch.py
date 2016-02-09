@@ -50,7 +50,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
 
     dao = finduser.data.Access(settings.db_default_properties, settings.db_dirty_user_refresh)
-    plugins = finduser.plugin.Manager(settings.plugins_path)
+    plugins = finduser.plugin.Manager(os.path.join(os.path.dirname(os.path.realpath(__file__)), settings.plugins_path))
 
     for k, v in plugins.get_plugins().items():
         dao.generate_model(k, v.get_schema())
