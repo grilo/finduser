@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+
 import logging
+import os
 import extlibs.peewee as orm
 
 import settings
 
-db = orm.SqliteDatabase(settings.db_name, pragmas=(("busy_timeout", "30000"),))
+db = orm.SqliteDatabase(os.path.join(os.path.dirname(os.path.realpath(__file__)), settings.db_name), pragmas=(("busy_timeout", "30000"),))
 #db = orm.PostgresqlDatabase(settings.db_name, user='postgres', port=5432)
 
 class BaseModel(orm.Model):
